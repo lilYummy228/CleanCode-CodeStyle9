@@ -58,7 +58,7 @@ namespace IMJunior
             Console.WriteLine($"Вы оплатили с помощью {paymentSystem.Id}");
             Console.WriteLine($"{paymentSystem.TransactionEnding}\n");
 
-            Console.WriteLine("Оплата прошла успешно!");
+            Console.WriteLine("Оплата прошла успешно!"); 
         }
     }
 
