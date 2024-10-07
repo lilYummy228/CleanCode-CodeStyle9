@@ -9,31 +9,10 @@ namespace IMJunior
         {
             OrderForm orderForm = new OrderForm();
             PaymentHandler paymentHandler = new PaymentHandler();
-            IPaymentSystem chosenPaymentSystem = null;
 
-            List<IPaymentSystem> paymentSystems = new List<IPaymentSystem>
-            {
-                new Qiwi("QIWI", "Перевод на страницу QIWI...", "Проверка платежа через QIWI..."),
-                new WebMoney("WebMoney", "Вызов API WebMoney...", "Проверка платежа через WebMoney..."),
-                new Card("Card", "Вызов API банка эмитера карты Card...", "Проверка платежа через Card...")
-            };
+            string systemId = orderForm.ShowForm(paymentHandler.PaymentSystems);
 
-            string systemId = orderForm.ShowForm();
-
-            foreach (IPaymentSystem paymentSystem in paymentSystems)
-            {
-                if (paymentSystem.Id.ToLower() == systemId.ToLower())
-                {
-                    chosenPaymentSystem = paymentSystem;
-
-                    paymentSystem.ShowProcess(paymentSystem.TransactionBeginning);
-
-                    break;
-                }
-            }
-
-            if (chosenPaymentSystem == null)
-                throw new ArgumentNullException(nameof(chosenPaymentSystem));
+            IPaymentSystem chosenPaymentSystem = paymentHandler.GetChosenPaymentSystem(systemId);
 
             paymentHandler.ShowPaymentResult(chosenPaymentSystem);
         }
@@ -41,9 +20,14 @@ namespace IMJunior
 
     public class OrderForm
     {
-        public string ShowForm()
+        public string ShowForm(IReadOnlyList<IPaymentSystem> paymentSystems)
         {
-            Console.WriteLine($"Мы принимаем: {nameof(Qiwi)}, {nameof(WebMoney)}, {nameof(Card)}");
+            string form = "Мы принимаем: ";
+
+            foreach (IPaymentSystem paymentSystem in paymentSystems)
+                form += $"{paymentSystem.Id}, ";
+
+            Console.WriteLine(form);
 
             //симуляция веб интерфейса
             Console.WriteLine("Какое системой вы хотите совершить оплату?");
@@ -53,12 +37,39 @@ namespace IMJunior
 
     public class PaymentHandler
     {
+        private List<IPaymentSystem> _paymentSystems = new List<IPaymentSystem>
+            {
+                new Qiwi("QIWI", "Перевод на страницу QIWI...", "Проверка платежа через QIWI..."),
+                new WebMoney("WebMoney", "Вызов API WebMoney...", "Проверка платежа через WebMoney..."),
+                new Card("Card", "Вызов API банка эмитера карты Card...", "Проверка платежа через Card...")
+            };
+
+        public IReadOnlyList<IPaymentSystem> PaymentSystems => _paymentSystems;
+
+        public IPaymentSystem GetChosenPaymentSystem(string systemId)
+        {
+            foreach (IPaymentSystem paymentSystem in _paymentSystems)
+            {
+                if (paymentSystem.Id.ToLower() == systemId.ToLower())
+                {
+                    paymentSystem.ShowProcess(paymentSystem.TransactionBeginning);
+
+                    return paymentSystem;
+                }
+            }
+
+            throw new ArgumentNullException(nameof(systemId));
+        }
+
         public void ShowPaymentResult(IPaymentSystem paymentSystem)
         {
+            if (paymentSystem == null)
+                throw new ArgumentNullException(nameof(paymentSystem));
+
             Console.WriteLine($"Вы оплатили с помощью {paymentSystem.Id}");
             Console.WriteLine($"{paymentSystem.TransactionEnding}\n");
 
-            Console.WriteLine("Оплата прошла успешно!"); 
+            Console.WriteLine("Оплата прошла успешно!");
         }
     }
 
@@ -77,7 +88,7 @@ namespace IMJunior
 
         public string TransactionEnding { get; private set; }
 
-        public void ShowProcess(string process) => 
+        public void ShowProcess(string process) =>
             Console.WriteLine(process);
     }
 
@@ -96,7 +107,7 @@ namespace IMJunior
 
         public string TransactionEnding { get; private set; }
 
-        public void ShowProcess(string process) => 
+        public void ShowProcess(string process) =>
             Console.WriteLine(process);
     }
 
@@ -115,7 +126,7 @@ namespace IMJunior
 
         public string TransactionEnding { get; private set; }
 
-        public void ShowProcess(string process) => 
+        public void ShowProcess(string process) =>
             Console.WriteLine(process);
     }
 
